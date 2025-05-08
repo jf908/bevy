@@ -81,18 +81,18 @@ impl Plugin for CorePipelinePlugin {
             .add_plugins((Core2dPlugin, Core3dPlugin, CopyDeferredLightingIdPlugin))
             .add_plugins((
                 BlitPlugin,
-                MsaaWritebackPlugin,
+                // MsaaWritebackPlugin,
                 TonemappingPlugin,
-                UpscalingPlugin,
+                // UpscalingPlugin,
                 BloomPlugin,
-                FxaaPlugin,
-                CasPlugin,
+                // FxaaPlugin,
+                // CasPlugin,
                 MotionBlurPlugin,
                 DepthOfFieldPlugin,
-                SmaaPlugin,
-                PostProcessingPlugin,
+                // SmaaPlugin,
+                // PostProcessingPlugin,
                 OrderIndependentTransparencyPlugin,
-                MipGenerationPlugin,
+                // MipGenerationPlugin,
             ));
     }
 }

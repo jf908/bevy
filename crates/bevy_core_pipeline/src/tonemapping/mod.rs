@@ -1,4 +1,8 @@
-use crate::fullscreen_vertex_shader::fullscreen_shader_vertex_state;
+use crate::{
+    blit::{BlitPipeline, BlitPipelineKey},
+    fullscreen_vertex_shader::fullscreen_shader_vertex_state,
+    upscaling::ViewUpscalingPipeline,
+};
 use bevy_app::prelude::*;
 use bevy_asset::{load_internal_asset, weak_handle, Assets, Handle};
 use bevy_ecs::prelude::*;
@@ -300,7 +304,7 @@ impl SpecializedRenderPipeline for TonemappingPipeline {
                 shader_defs,
                 entry_point: "fragment".into(),
                 targets: vec![Some(ColorTargetState {
-                    format: ViewTarget::TEXTURE_FORMAT_HDR,
+                    format: TextureFormat::Bgra8UnormSrgb,
                     blend: None,
                     write_mask: ColorWrites::ALL,
                 })],
@@ -349,7 +353,7 @@ pub struct ViewTonemappingPipeline(CachedRenderPipelineId);
 
 pub fn prepare_view_tonemapping_pipelines(
     mut commands: Commands,
-    pipeline_cache: Res<PipelineCache>,
+    mut pipeline_cache: ResMut<PipelineCache>,
     mut pipelines: ResMut<SpecializedRenderPipelines<TonemappingPipeline>>,
     upscaling_pipeline: Res<TonemappingPipeline>,
     view_targets: Query<
@@ -386,6 +390,9 @@ pub fn prepare_view_tonemapping_pipelines(
             flags,
         };
         let pipeline = pipelines.specialize(&pipeline_cache, &upscaling_pipeline, key);
+
+        // Ensure the pipeline is loaded before continuing the frame to prevent frames without any GPU work submitted
+        pipeline_cache.block_on_render_pipeline(pipeline);
 
         commands
             .entity(entity)

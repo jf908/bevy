@@ -507,7 +507,7 @@ impl Plugin for GpuMeshPreprocessPlugin {
                     NodePbr::EarlyPrepassBuildIndirectParameters,
                     Node3d::EarlyPrepass,
                     Node3d::EarlyDeferredPrepass,
-                    Node3d::EarlyDownsampleDepth,
+                    // Node3d::EarlyDownsampleDepth,
                     NodePbr::LateGpuPreprocess,
                     NodePbr::LatePrepassBuildIndirectParameters,
                     Node3d::LatePrepass,
@@ -520,7 +520,7 @@ impl Plugin for GpuMeshPreprocessPlugin {
                 (
                     NodePbr::EarlyPrepassBuildIndirectParameters,
                     NodePbr::EarlyShadowPass,
-                    Node3d::EarlyDownsampleDepth,
+                    // Node3d::EarlyDownsampleDepth,
                 )
             ).add_render_graph_edges(
                 Core3d,
