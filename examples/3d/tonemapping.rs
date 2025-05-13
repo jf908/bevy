@@ -11,6 +11,7 @@ use bevy::{
         view::{ColorGrading, ColorGradingGlobal, ColorGradingSection},
     },
 };
+use bevy_render::view::NoIndirectDrawing;
 use std::f32::consts::PI;
 
 /// This example uses a shader source file from the assets subdirectory
@@ -63,6 +64,7 @@ fn setup(
             hdr: true,
             ..default()
         },
+        NoIndirectDrawing,
         camera_transform.0,
         DistanceFog {
             color: Color::srgb_u8(43, 44, 47),
