@@ -36,7 +36,7 @@ pub mod graph {
         Smaa,
         Upscaling,
         ContrastAdaptiveSharpening,
-        EndMainPassPostProcessing,
+        // EndMainPassPostProcessing,
     }
 }
 
@@ -113,7 +113,6 @@ use crate::{
     },
     skybox::SkyboxPlugin,
     tonemapping::TonemappingNode,
-    upscaling::UpscalingNode,
 };
 
 use self::graph::{Core3d, Node3d};
