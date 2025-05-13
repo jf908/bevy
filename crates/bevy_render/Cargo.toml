@@ -36,7 +36,7 @@ detailed_trace = []
 # bevy
 bevy_app = { version = "0.15.3" }
 bevy_asset = { version = "0.15.3" }
-bevy_color = { features = ["serialize", "wgpu-types"] }
+bevy_color = { version = "0.15.4", features = ["serialize", "wgpu-types"] }
 bevy_core = { version = "0.15.3" }
 bevy_derive = { version = "0.15.3" }
 bevy_diagnostic = { version = "0.15.3" }
@@ -44,7 +44,7 @@ bevy_ecs = { version = "0.15.3" }
 bevy_encase_derive = { version = "0.15.3" }
 bevy_hierarchy = { version = "0.15.3" }
 bevy_math = { version = "0.15.3" }
-bevy_reflect = { features = ["bevy"] }
+bevy_reflect = { version = "0.15.3", features = ["bevy"] }
 bevy_render_macros = { version = "0.15.3" }
 bevy_time = { version = "0.15.3" }
 bevy_transform = { version = "0.15.3" }

@@ -39,9 +39,9 @@ bevy_derive = { version = "0.15.3" }
 bevy_ecs = { version = "0.15.3" }
 bevy_image = { version = "0.15.3" }
 bevy_math = { version = "0.15.3" }
-bevy_reflect = { features = ["bevy"] }
+bevy_reflect = { version = "0.15.3", features = ["bevy"] }
 bevy_render = { version = "0.15.3" }
-bevy_tasks = { optional = true }
+bevy_tasks = { version = "0.15.3", optional = true }
 bevy_transform = { version = "0.15.3" }
 bevy_utils = { version = "0.15.3" }
 bevy_window = { version = "0.15.3" }
