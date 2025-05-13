@@ -161,8 +161,8 @@ pub fn build_ui_render(app: &mut App) {
         graph_3d.add_sub_graph(SubGraphUi, ui_graph_3d);
         graph_3d.add_node(NodeUi::UiPass, RunGraphOnViewNode::new(SubGraphUi));
         graph_3d.add_node_edge(Node3d::EndMainPass, NodeUi::UiPass);
-        graph_3d.add_node_edge(Node3d::EndMainPassPostProcessing, NodeUi::UiPass);
-        graph_3d.add_node_edge(NodeUi::UiPass, Node3d::Upscaling);
+        // graph_3d.add_node_edge(Node3d::EndMainPassPostProcessing, NodeUi::UiPass);
+        // graph_3d.add_node_edge(NodeUi::UiPass, Node3d::Upscaling);
     }
 
     app.add_plugins(UiTextureSlicerPlugin);
