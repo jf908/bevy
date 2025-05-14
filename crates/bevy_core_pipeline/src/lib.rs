@@ -29,6 +29,7 @@ pub mod tonemapping;
 pub mod upscaling;
 
 pub use skybox::Skybox;
+use upscaling::UpscalingPlugin;
 
 /// Experimental features that are not yet finished. Please report any issues you encounter!
 ///
@@ -96,7 +97,7 @@ impl Plugin for CorePipelinePlugin {
                 BlitPlugin,
                 MsaaWritebackPlugin,
                 TonemappingPlugin,
-                // UpscalingPlugin,
+                UpscalingPlugin,
                 BloomPlugin,
                 // FxaaPlugin,
                 // CasPlugin,
