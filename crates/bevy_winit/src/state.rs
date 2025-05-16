@@ -487,40 +487,6 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
         create_windows(event_loop, create_window.get_mut(self.world_mut()));
         create_window.apply(self.world_mut());
 
-        // Have the startup behavior run in about_to_wait, which prevents issues with
-        // invisible window creation. https://github.com/bevyengine/bevy/issues/18027
-        #[cfg(target_os = "windows")]
-        {
-            let winit_windows = self.world().non_send_resource::<WinitWindows>();
-            let headless = winit_windows.windows.is_empty();
-            let exiting = self.app_exit.is_some();
-            let reactive = matches!(self.update_mode, UpdateMode::Reactive { .. });
-            let all_invisible = winit_windows
-                .windows
-                .iter()
-                .all(|(_, w)| !w.is_visible().unwrap_or(false));
-            if !exiting
-                && (self.startup_forced_updates > 0 || headless || all_invisible || reactive)
-            {
-                self.redraw_requested(event_loop);
-            }
-        }
-    }
-
-    fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
-        // Mark the state as `WillSuspend`. This will let the schedule run one last time
-        // before actually suspending to let the application react
-        self.lifecycle = AppLifecycle::WillSuspend;
-    }
-
-    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
-        let world = self.world_mut();
-        world.clear_all();
-    }
-}
-
-impl<T: Event> WinitAppRunnerState<T> {
-    fn redraw_requested(&mut self, event_loop: &ActiveEventLoop) {
         let mut redraw_event_reader = EventCursor::<RequestRedraw>::default();
 
         let mut focused_windows_state: SystemState<(Res<WinitSettings>, Query<(Entity, &Window)>)> =
@@ -715,6 +681,19 @@ impl<T: Event> WinitAppRunnerState<T> {
         }
     }
 
+    fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
+        // Mark the state as `WillSuspend`. This will let the schedule run one last time
+        // before actually suspending to let the application react
+        self.lifecycle = AppLifecycle::WillSuspend;
+    }
+
+    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
+        let world = self.world_mut();
+        world.clear_all();
+    }
+}
+
+impl<T: Event> WinitAppRunnerState<T> {
     fn should_update(&self, update_mode: UpdateMode) -> bool {
         let handle_event = match update_mode {
             UpdateMode::Continuous => {
