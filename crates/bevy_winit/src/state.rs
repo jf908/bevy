@@ -450,16 +450,6 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
             }
             WindowEvent::RedrawRequested => {
                 self.ran_update_since_last_redraw = false;
-
-                // https://github.com/bevyengine/bevy/issues/17488
-                #[cfg(target_os = "windows")]
-                {
-                    // Have the startup behavior run in about_to_wait, which prevents issues with
-                    // invisible window creation. https://github.com/bevyengine/bevy/issues/18027
-                    if self.startup_forced_updates == 0 {
-                        self.redraw_requested(_event_loop);
-                    }
-                }
             }
             _ => {}
         }
@@ -496,12 +486,6 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
         create_monitor.apply(self.world_mut());
         create_windows(event_loop, create_window.get_mut(self.world_mut()));
         create_window.apply(self.world_mut());
-
-        // TODO: This is a workaround for https://github.com/bevyengine/bevy/issues/17488
-        //       while preserving the iOS fix in https://github.com/bevyengine/bevy/pull/11245
-        //       The monitor sync logic likely belongs in monitor event handlers and not here.
-        #[cfg(not(target_os = "windows"))]
-        self.redraw_requested(event_loop);
 
         // Have the startup behavior run in about_to_wait, which prevents issues with
         // invisible window creation. https://github.com/bevyengine/bevy/issues/18027
