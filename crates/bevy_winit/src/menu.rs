@@ -1,28 +1,27 @@
-use muda::{
-    AboutMetadata, CheckMenuItem, ContextMenu, IconMenuItem, Menu, MenuEvent, MenuItem,
-    PredefinedMenuItem, Submenu,
-};
+use muda::{Menu, PredefinedMenuItem, Submenu};
 
 pub struct AppMenu {
     pub menu_bar: Menu,
-    pub edit_menu: Submenu,
+    // pub edit_menu: Submenu,
 }
 
 impl AppMenu {
     pub fn new(menu_bar: Menu) -> Self {
         let app_menu = Submenu::new("App", true);
-        app_menu.append_items(&[
-            &PredefinedMenuItem::about(None, None),
-            &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::services(None),
-            &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::hide(None),
-            &PredefinedMenuItem::hide_others(None),
-            &PredefinedMenuItem::show_all(None),
-            &PredefinedMenuItem::separator(),
-            &PredefinedMenuItem::quit(None),
-        ]);
-        menu_bar.append(&app_menu);
+        app_menu
+            .append_items(&[
+                &PredefinedMenuItem::about(None, None),
+                &PredefinedMenuItem::separator(),
+                &PredefinedMenuItem::services(None),
+                &PredefinedMenuItem::separator(),
+                &PredefinedMenuItem::hide(None),
+                &PredefinedMenuItem::hide_others(None),
+                &PredefinedMenuItem::show_all(None),
+                &PredefinedMenuItem::separator(),
+                &PredefinedMenuItem::quit(None),
+            ])
+            .ok();
+        menu_bar.append(&app_menu).ok();
 
         let edit_menu = Submenu::new("&Edit", true);
 
@@ -34,19 +33,18 @@ impl AppMenu {
         let paste = PredefinedMenuItem::paste(None);
         let select_all = PredefinedMenuItem::select_all(None);
 
-        edit_menu.append_items(&[
-            &undo,
-            &redo,
-            &PredefinedMenuItem::separator(),
-            &cut,
-            &copy,
-            &paste,
-            &select_all,
-        ]);
+        edit_menu
+            .append_items(&[
+                &undo,
+                &redo,
+                &PredefinedMenuItem::separator(),
+                &cut,
+                &copy,
+                &paste,
+                &select_all,
+            ])
+            .ok();
 
-        Self {
-            menu: menu_bar,
-            edit_menu,
-        }
+        Self { menu_bar }
     }
 }
