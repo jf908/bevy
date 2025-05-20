@@ -25,6 +25,8 @@ impl AppMenu {
 
         let edit_menu = Submenu::new("&Edit", true);
 
+        menu_bar.append_items(&[&edit_menu]).ok();
+
         let undo = PredefinedMenuItem::undo(None);
         let redo = PredefinedMenuItem::redo(None);
 
