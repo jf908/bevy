@@ -28,6 +28,7 @@ use bevy_platform::time::Instant;
 #[cfg(not(target_arch = "wasm32"))]
 use bevy_tasks::tick_global_task_pools_on_main_thread;
 use core::marker::PhantomData;
+use muda::Menu;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::EventLoopExtWebSys;
 use winit::{
@@ -51,6 +52,7 @@ use bevy_window::{PrimaryWindow, RawHandleWrapper};
 use crate::{
     accessibility::AccessKitAdapters,
     converters, create_windows,
+    menu::AppMenu,
     system::{create_monitors, CachedWindow, WinitWindowPressedKeys},
     AppSendEvent, CreateMonitorParams, CreateWindowParams, EventLoopProxyWrapper,
     RawWinitWindowEvent, UpdateMode, WinitSettings, WinitWindows,
@@ -61,6 +63,8 @@ use crate::{
 struct WinitAppRunnerState<T: Event> {
     /// The running app.
     app: App,
+    /// The running app.
+    menu: AppMenu,
     /// Exit value once the loop is finished.
     app_exit: Option<AppExit>,
     /// Current update mode of the app.
@@ -124,6 +128,7 @@ impl<T: Event> WinitAppRunnerState<T> {
 
         Self {
             app,
+            menu: AppMenu::new(Menu::new()),
             lifecycle: AppLifecycle::Idle,
             previous_lifecycle: AppLifecycle::Idle,
             app_exit: None,
@@ -209,6 +214,11 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
 
         #[cfg(feature = "trace")]
         let _span = tracing::info_span!("winit event_handler").entered();
+
+        #[cfg(target_os = "macos")]
+        if cause == StartCause::Init {
+            self.menu.menu_bar.init_for_nsapp();
+        }
 
         if self.app.plugins_state() != PluginsState::Cleaned {
             if self.app.plugins_state() != PluginsState::Ready {
