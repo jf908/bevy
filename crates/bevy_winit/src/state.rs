@@ -503,6 +503,19 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
         #[cfg(not(target_os = "windows"))]
         self.redraw_requested(event_loop);
 
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd",
+        ))]
+        {
+            while gtk::events_pending() {
+                gtk::main_iteration_do(false);
+            }
+        }
+
         // Have the startup behavior run in about_to_wait, which prevents issues with
         // invisible window creation. https://github.com/bevyengine/bevy/issues/18027
         #[cfg(target_os = "windows")]
