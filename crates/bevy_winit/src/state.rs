@@ -702,6 +702,19 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
 
             event_loop.exit();
         }
+
+        #[cfg(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd",
+        ))]
+        {
+            while gtk::events_pending() {
+                gtk::main_iteration_do(false);
+            }
+        }
     }
 
     fn suspended(&mut self, _event_loop: &ActiveEventLoop) {
