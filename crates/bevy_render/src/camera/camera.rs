@@ -1106,6 +1106,7 @@ pub fn extract_cameras(
             Option<&TemporalJitter>,
             Option<&RenderLayers>,
             Option<&Projection>,
+            Option<&MainPassResolutionScale>,
             Has<NoIndirectDrawing>,
         )>,
     >,
@@ -1127,6 +1128,7 @@ pub fn extract_cameras(
         temporal_jitter,
         render_layers,
         projection,
+        resolution_override,
         no_indirect_drawing,
     ) in query.iter()
     {
@@ -1219,6 +1221,10 @@ pub fn extract_cameras(
                 render_visible_entities,
                 *frustum,
             ));
+
+            if let Some(resolution_override) = resolution_override {
+                commands.insert(resolution_override.clone());
+            }
 
             if let Some(temporal_jitter) = temporal_jitter {
                 commands.insert(temporal_jitter.clone());
@@ -1342,3 +1348,14 @@ impl TemporalJitter {
 #[derive(Default, Component, Reflect)]
 #[reflect(Default, Component)]
 pub struct MipBias(pub f32);
+
+/// Override the resolution a 3d camera's main pass is rendered at.
+///
+/// Does not affect post processing.
+///
+/// ## Usage
+///
+/// * Insert this component on a 3d camera entity to override resolution.
+#[derive(Component, Clone, Reflect, Deref)]
+#[reflect(Component)]
+pub struct MainPassResolutionScale(pub f32);

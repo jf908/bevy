@@ -9,7 +9,7 @@ pub use window::*;
 use crate::{
     camera::{
         CameraMainTextureUsages, ClearColor, ClearColorConfig, Exposure, ExtractedCamera,
-        ManualTextureViews, MipBias, NormalizedRenderTarget, TemporalJitter,
+        MainPassResolutionScale, ManualTextureViews, NormalizedRenderTarget, TemporalJitter,
     },
     experimental::occlusion_culling::OcclusionCulling,
     extract_component::ExtractComponentPlugin,
@@ -903,7 +903,8 @@ pub fn prepare_view_uniforms(
         &ExtractedView,
         Option<&Frustum>,
         Option<&TemporalJitter>,
-        Option<&MipBias>,
+        Option<&MainPassResolutionScale>,
+        // Option<&MipBias>,
     )>,
     frame_count: Res<FrameCount>,
 ) {
@@ -916,7 +917,16 @@ pub fn prepare_view_uniforms(
     else {
         return;
     };
-    for (entity, extracted_camera, extracted_view, frustum, temporal_jitter, mip_bias) in &views {
+    for (
+        entity,
+        extracted_camera,
+        extracted_view,
+        frustum,
+        temporal_jitter,
+        // mip_bias,
+        resolution_override,
+    ) in &views
+    {
         let viewport = extracted_view.viewport.as_vec4();
         let unjittered_projection = extracted_view.clip_from_view;
         let mut clip_from_view = unjittered_projection;
@@ -958,7 +968,9 @@ pub fn prepare_view_uniforms(
                 viewport,
                 frustum,
                 color_grading: extracted_view.color_grading.clone().into(),
-                mip_bias: mip_bias.unwrap_or(&MipBias(0.0)).0,
+                // HACK: Hijacking this value for resolution scale
+                mip_bias: resolution_override.map_or(1.0, |r| r.0),
+                // mip_bias: mip_bias.unwrap_or(&MipBias(0.0)).0,
                 frame_count: frame_count.0,
             }),
         };

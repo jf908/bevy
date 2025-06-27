@@ -4,7 +4,7 @@ use crate::{
 };
 use bevy_ecs::{prelude::World, query::QueryItem};
 use bevy_render::{
-    camera::ExtractedCamera,
+    camera::{ExtractedCamera, MainPassResolutionScale},
     diagnostic::RecordDiagnostics,
     render_graph::{NodeRunError, RenderGraphContext, ViewNode},
     render_phase::{TrackedRenderPass, ViewBinnedRenderPhases},
@@ -28,6 +28,7 @@ impl ViewNode for MainOpaquePass3dNode {
         &'static ExtractedView,
         &'static ViewTarget,
         &'static ViewDepthTexture,
+        Option<&'static MainPassResolutionScale>,
         Option<&'static SkyboxPipelineId>,
         Option<&'static SkyboxBindGroup>,
         &'static ViewUniformOffset,
@@ -42,6 +43,7 @@ impl ViewNode for MainOpaquePass3dNode {
             extracted_view,
             target,
             depth,
+            resolution_override,
             skybox_pipeline,
             skybox_bind_group,
             view_uniform_offset,
@@ -90,7 +92,17 @@ impl ViewNode for MainOpaquePass3dNode {
             let pass_span = diagnostics.pass_span(&mut render_pass, "main_opaque_pass_3d");
 
             if let Some(viewport) = camera.viewport.as_ref() {
-                render_pass.set_camera_viewport(viewport);
+                let scale =
+                    resolution_override.map_or(1.0, |MainPassResolutionScale(scale)| *scale);
+
+                render_pass.set_viewport(
+                    viewport.physical_position.x as f32,
+                    viewport.physical_position.y as f32,
+                    viewport.physical_size.x as f32 * scale,
+                    viewport.physical_size.y as f32 * scale,
+                    viewport.depth.start,
+                    viewport.depth.end,
+                );
             }
 
             // Opaque draws
