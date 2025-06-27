@@ -92,10 +92,8 @@ impl ViewNode for MainOpaquePass3dNode {
             let mut render_pass = TrackedRenderPass::new(&render_device, render_pass);
             let pass_span = diagnostics.pass_span(&mut render_pass, "main_opaque_pass_3d");
 
+            let scale = resolution_override.map_or(1.0, |MainPassResolutionScale(scale)| *scale);
             if let Some(viewport) = camera.viewport.as_ref() {
-                let scale =
-                    resolution_override.map_or(1.0, |MainPassResolutionScale(scale)| *scale);
-
                 render_pass.set_viewport(
                     viewport.physical_position.x as f32,
                     viewport.physical_position.y as f32,
@@ -103,6 +101,17 @@ impl ViewNode for MainOpaquePass3dNode {
                     viewport.physical_size.y as f32 * scale,
                     viewport.depth.start,
                     viewport.depth.end,
+                );
+            } else {
+                let texture = target.main_texture().size();
+
+                render_pass.set_viewport(
+                    0.0,
+                    0.0,
+                    texture.width as f32 * scale,
+                    texture.height as f32 * scale,
+                    0.0,
+                    1.0,
                 );
             }
 
