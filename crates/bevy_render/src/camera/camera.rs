@@ -177,7 +177,7 @@ pub struct RenderTargetInfo {
 #[derive(Default, Debug, Clone)]
 pub struct ComputedCameraValues {
     clip_from_view: Mat4,
-    target_info: Option<RenderTargetInfo>,
+    pub target_info: Option<RenderTargetInfo>,
     // size of the `Viewport`
     old_viewport_size: Option<UVec2>,
     old_sub_camera_view: Option<SubCameraView>,

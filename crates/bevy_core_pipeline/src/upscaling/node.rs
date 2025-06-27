@@ -1,10 +1,14 @@
-use crate::{blit::BlitPipeline, upscaling::ViewUpscalingPipeline};
+use crate::{
+    blit::{BlitPipeline, BlitUniform},
+    upscaling::ViewUpscalingPipeline,
+};
 use bevy_ecs::{prelude::*, query::QueryItem};
 use bevy_render::{
     camera::{CameraOutputMode, ClearColor, ClearColorConfig, ExtractedCamera},
+    extract_component::{ComponentUniforms, DynamicUniformIndex},
     render_graph::{NodeRunError, RenderGraphContext, ViewNode},
     render_resource::{
-        BindGroup, BindGroupEntries, PipelineCache, RenderPassDescriptor, TextureViewId,
+        BindGroup, BindGroupEntries, BufferId, PipelineCache, RenderPassDescriptor, TextureViewId,
     },
     renderer::RenderContext,
     view::ViewTarget,
@@ -13,13 +17,14 @@ use std::sync::Mutex;
 
 #[derive(Default)]
 pub struct UpscalingNode {
-    cached_texture_bind_group: Mutex<Option<(TextureViewId, BindGroup)>>,
+    cached_texture_bind_group: Mutex<Option<(BufferId, TextureViewId, BindGroup)>>,
 }
 
 impl ViewNode for UpscalingNode {
     type ViewQuery = (
         &'static ViewTarget,
         &'static ViewUpscalingPipeline,
+        &'static DynamicUniformIndex<BlitUniform>,
         Option<&'static ExtractedCamera>,
     );
 
@@ -27,12 +32,18 @@ impl ViewNode for UpscalingNode {
         &self,
         _graph: &mut RenderGraphContext,
         render_context: &mut RenderContext,
-        (target, upscaling_target, camera): QueryItem<Self::ViewQuery>,
+        (target, upscaling_target, uniform_index, camera): QueryItem<Self::ViewQuery>,
         world: &World,
     ) -> Result<(), NodeRunError> {
         let pipeline_cache = world.get_resource::<PipelineCache>().unwrap();
         let blit_pipeline = world.get_resource::<BlitPipeline>().unwrap();
         let clear_color_global = world.get_resource::<ClearColor>().unwrap();
+        let uniforms = world.resource::<ComponentUniforms<BlitUniform>>();
+
+        let uniforms_id = uniforms.buffer().unwrap().id();
+        let Some(uniforms) = uniforms.binding() else {
+            return Ok(());
+        };
 
         let clear_color = if let Some(camera) = camera {
             match camera.output_mode {
@@ -52,15 +63,24 @@ impl ViewNode for UpscalingNode {
 
         let mut cached_bind_group = self.cached_texture_bind_group.lock().unwrap();
         let bind_group = match &mut *cached_bind_group {
-            Some((id, bind_group)) if upscaled_texture.id() == *id => bind_group,
+            Some((buffer_id, id, bind_group))
+                if upscaled_texture.id() == *id && uniforms_id == *buffer_id =>
+            {
+                bind_group
+            }
             cached_bind_group => {
                 let bind_group = render_context.render_device().create_bind_group(
                     None,
                     &blit_pipeline.texture_bind_group,
-                    &BindGroupEntries::sequential((upscaled_texture, &blit_pipeline.sampler)),
+                    &BindGroupEntries::sequential((
+                        upscaled_texture,
+                        &blit_pipeline.sampler,
+                        uniforms,
+                    )),
                 );
 
-                let (_, bind_group) = cached_bind_group.insert((upscaled_texture.id(), bind_group));
+                let (_, _, bind_group) =
+                    cached_bind_group.insert((uniforms_id, upscaled_texture.id(), bind_group));
                 bind_group
             }
         };
@@ -83,16 +103,8 @@ impl ViewNode for UpscalingNode {
             .command_encoder()
             .begin_render_pass(&pass_descriptor);
 
-        if let Some(camera) = camera {
-            if let Some(viewport) = &camera.viewport {
-                let size = viewport.physical_size;
-                let position = viewport.physical_position;
-                render_pass.set_scissor_rect(position.x, position.y, size.x, size.y);
-            }
-        }
-
         render_pass.set_pipeline(pipeline);
-        render_pass.set_bind_group(0, bind_group, &[]);
+        render_pass.set_bind_group(0, bind_group, &[uniform_index.index()]);
         render_pass.draw(0..3, 0..1);
 
         Ok(())
