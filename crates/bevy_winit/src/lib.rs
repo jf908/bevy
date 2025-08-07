@@ -47,6 +47,8 @@ mod converters;
 pub mod cursor;
 #[cfg(feature = "custom_cursor")]
 mod custom_cursor;
+#[cfg(target_os = "macos")]
+mod menu;
 mod state;
 mod system;
 mod winit_config;
@@ -80,7 +82,7 @@ pub struct WinitPlugin<T: Event = WakeUp> {
     marker: PhantomData<T>,
 }
 
-impl<T: Event> Plugin for WinitPlugin<T> {
+impl<T: Event + Default> Plugin for WinitPlugin<T> {
     fn name(&self) -> &str {
         "bevy_winit::WinitPlugin"
     }
@@ -120,9 +122,23 @@ impl<T: Event> Plugin for WinitPlugin<T> {
             event_loop_builder.with_android_app(bevy_window::ANDROID_APP.get().expect(msg).clone());
         }
 
+        #[cfg(target_os = "macos")]
+        {
+            use winit::platform::macos::EventLoopBuilderExtMacOS;
+            event_loop_builder.with_default_menu(false);
+        }
+
         let event_loop = event_loop_builder
             .build()
             .expect("Failed to build event loop");
+
+        #[cfg(target_os = "macos")]
+        {
+            let proxy = event_loop.create_proxy();
+            muda::MenuEvent::set_event_handler(Some(move |_| {
+                proxy.send_event(T::default()).ok();
+            }));
+        }
 
         app.init_non_send_resource::<WinitWindows>()
             .init_resource::<WinitMonitors>()

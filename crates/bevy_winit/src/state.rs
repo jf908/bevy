@@ -28,6 +28,8 @@ use bevy_platform::time::Instant;
 #[cfg(not(target_arch = "wasm32"))]
 use bevy_tasks::tick_global_task_pools_on_main_thread;
 use core::marker::PhantomData;
+#[cfg(target_os = "macos")]
+use muda::Menu;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::EventLoopExtWebSys;
 use winit::{
@@ -56,11 +58,17 @@ use crate::{
     RawWinitWindowEvent, UpdateMode, WinitSettings, WinitWindows,
 };
 
+#[cfg(target_os = "macos")]
+use crate::menu::AppMenu;
+
 /// Persistent state that is used to run the [`App`] according to the current
 /// [`UpdateMode`].
 struct WinitAppRunnerState<T: Event> {
     /// The running app.
     app: App,
+    /// The menu.
+    #[cfg(target_os = "macos")]
+    menu: AppMenu,
     /// Exit value once the loop is finished.
     app_exit: Option<AppExit>,
     /// Current update mode of the app.
@@ -125,6 +133,8 @@ impl<T: Event> WinitAppRunnerState<T> {
 
         Self {
             app,
+            #[cfg(target_os = "macos")]
+            menu: AppMenu::new(Menu::new()),
             lifecycle: AppLifecycle::Idle,
             previous_lifecycle: AppLifecycle::Idle,
             app_exit: None,
@@ -210,6 +220,11 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
 
         #[cfg(feature = "trace")]
         let _span = tracing::info_span!("winit event_handler").entered();
+
+        #[cfg(target_os = "macos")]
+        if cause == StartCause::Init {
+            self.menu.menu_bar.init_for_nsapp();
+        }
 
         if self.app.plugins_state() != PluginsState::Cleaned {
             if self.app.plugins_state() != PluginsState::Ready {
