@@ -18,7 +18,7 @@
 
 @fragment
 fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32> {
-    let hdr_color = textureSample(hdr_texture, hdr_sampler, in.uv * view.mip_bias);
+    let hdr_color = textureSample(hdr_texture, hdr_sampler, in.uv * view.resolution_scale);
 
     var output_rgb = tone_mapping(hdr_color, view.color_grading).rgb;
 

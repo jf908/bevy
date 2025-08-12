@@ -63,4 +63,5 @@ struct View {
     color_grading: ColorGrading,
     mip_bias: f32,
     frame_count: u32,
+    resolution_scale: f32,
 };

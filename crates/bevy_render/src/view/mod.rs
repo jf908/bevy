@@ -9,7 +9,8 @@ pub use window::*;
 use crate::{
     camera::{
         CameraMainTextureUsages, ClearColor, ClearColorConfig, Exposure, ExtractedCamera,
-        MainPassResolutionScale, ManualTextureViews, NormalizedRenderTarget, TemporalJitter,
+        MainPassResolutionScale, ManualTextureViews, MipBias, NormalizedRenderTarget,
+        TemporalJitter,
     },
     experimental::occlusion_culling::OcclusionCulling,
     extract_component::ExtractComponentPlugin,
@@ -575,6 +576,7 @@ pub struct ViewUniform {
     pub color_grading: ColorGradingUniform,
     pub mip_bias: f32,
     pub frame_count: u32,
+    pub resolution_scale: f32,
 }
 
 #[derive(Resource)]
@@ -903,8 +905,8 @@ pub fn prepare_view_uniforms(
         &ExtractedView,
         Option<&Frustum>,
         Option<&TemporalJitter>,
+        Option<&MipBias>,
         Option<&MainPassResolutionScale>,
-        // Option<&MipBias>,
     )>,
     frame_count: Res<FrameCount>,
 ) {
@@ -923,7 +925,7 @@ pub fn prepare_view_uniforms(
         extracted_view,
         frustum,
         temporal_jitter,
-        // mip_bias,
+        mip_bias,
         resolution_override,
     ) in &views
     {
@@ -968,10 +970,9 @@ pub fn prepare_view_uniforms(
                 viewport,
                 frustum,
                 color_grading: extracted_view.color_grading.clone().into(),
-                // HACK: Hijacking this value for resolution scale
-                mip_bias: resolution_override.map_or(1.0, |r| r.0),
-                // mip_bias: mip_bias.unwrap_or(&MipBias(0.0)).0,
+                mip_bias: mip_bias.unwrap_or(&MipBias(0.0)).0,
                 frame_count: frame_count.0,
+                resolution_scale: resolution_override.map_or(1.0, |r| r.0),
             }),
         };
 
