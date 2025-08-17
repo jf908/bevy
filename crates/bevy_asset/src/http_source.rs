@@ -1,11 +1,12 @@
 use crate::io::{AssetReader, AssetReaderError, Reader};
 use crate::io::{AssetSource, PathStream};
 use crate::AssetApp;
-use alloc::{borrow::ToOwned, boxed::Box};
+use alloc::{borrow::ToOwned, boxed::Box, string::String, vec::Vec};
 use bevy_app::{App, Plugin};
 use bevy_tasks::ConditionalSendFuture;
 use blocking::unblock;
 use std::path::{Path, PathBuf};
+use url::{Origin, Url};
 
 /// Adds the `http` and `https` asset sources to the app.
 ///
@@ -22,49 +23,104 @@ use std::path::{Path, PathBuf};
 /// [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 /// ureq = { version = "3", default-features = false, features = ["gzip", "brotli"] }
 /// ```
-pub struct HttpSourcePlugin;
+pub struct HttpSourcePlugin {
+    /// The allowed origins for HTTP(S) requests.
+    pub allowed_origins: AllowedOrigins,
+}
 
 impl Plugin for HttpSourcePlugin {
     fn build(&self, app: &mut App) {
         #[cfg(feature = "http")]
-        app.register_asset_source(
-            "http",
-            AssetSource::build()
-                .with_reader(|| Box::new(HttpSourceAssetReader::Http))
-                .with_processed_reader(|| Box::new(HttpSourceAssetReader::Http)),
-        );
+        {
+            let origins = self.allowed_origins.clone();
+            let processed_origins = self.allowed_origins.clone();
+
+            app.register_asset_source(
+                "http",
+                AssetSource::build()
+                    .with_reader(|| {
+                        Box::new(HttpSourceAssetReader {
+                            secure: false,
+                            allowed_origins: origins,
+                        })
+                    })
+                    .with_processed_reader(|| {
+                        Box::new(HttpSourceAssetReader {
+                            secure: false,
+                            allowed_origins: processed_origins,
+                        })
+                    }),
+            );
+        }
 
         #[cfg(feature = "https")]
-        app.register_asset_source(
-            "https",
-            AssetSource::build()
-                .with_reader(|| Box::new(HttpSourceAssetReader::Https))
-                .with_processed_reader(|| Box::new(HttpSourceAssetReader::Https)),
-        );
+        {
+            let origins = self.allowed_origins.clone();
+            let processed_origins = self.allowed_origins.clone();
+
+            app.register_asset_source(
+                "https",
+                AssetSource::build()
+                    .with_reader(move || {
+                        Box::new(HttpSourceAssetReader {
+                            secure: false,
+                            allowed_origins: origins.clone(),
+                        })
+                    })
+                    .with_processed_reader(move || {
+                        Box::new(HttpSourceAssetReader {
+                            secure: false,
+                            allowed_origins: processed_origins.clone(),
+                        })
+                    }),
+            );
+        }
     }
 }
 
-impl Default for HttpSourcePlugin {
-    fn default() -> Self {
-        Self
+#[derive(Clone)]
+pub enum AllowedOrigins {
+    /// Allow all origins.
+    All,
+    /// Allow only the specified origins.
+    Only(Vec<Origin>),
+}
+
+impl AllowedOrigins {
+    pub fn new(origins: impl IntoIterator<Item = String>) -> Self {
+        Self::Only(
+            origins
+                .into_iter()
+                .map(|origin| {
+                    Url::parse(&origin)
+                        .expect("AllowedOrigins is not properly formatted")
+                        .origin()
+                })
+                .collect::<Vec<_>>(),
+        )
+    }
+
+    fn is_allowed(&self, url: Url) -> bool {
+        match self {
+            AllowedOrigins::All => true,
+            AllowedOrigins::Only(origins) => {
+                let origin = url.origin();
+                origins.iter().any(|allowed| allowed == &origin)
+            }
+        }
     }
 }
 
 /// Asset reader that treats paths as urls to load assets from.
-pub enum HttpSourceAssetReader {
-    /// Unencrypted connections.
-    Http,
-    /// Use TLS for setting up connections.
-    Https,
+#[derive(Clone)]
+pub struct HttpSourceAssetReader {
+    pub secure: bool,
+    pub allowed_origins: AllowedOrigins,
 }
 
 impl HttpSourceAssetReader {
     fn make_uri(&self, path: &Path) -> PathBuf {
-        PathBuf::from(match self {
-            Self::Http => "http://",
-            Self::Https => "https://",
-        })
-        .join(path)
+        PathBuf::from(if self.secure { "https://" } else { "http://" }).join(path)
     }
 
     /// See [`crate::io::get_meta_path`]
@@ -146,10 +202,24 @@ impl AssetReader for HttpSourceAssetReader {
         &'a self,
         path: &'a Path,
     ) -> impl ConditionalSendFuture<Output = Result<Box<dyn Reader>, AssetReaderError>> {
-        get(self.make_uri(path))
+        return async {
+            if let Some(url) = Url::parse(path.to_str().unwrap_or_default()).ok() {
+                if !self.allowed_origins.is_allowed(url) {
+                    return todo!("");
+                }
+            }
+
+            get(self.make_uri(path)).await
+        };
     }
 
     async fn read_meta<'a>(&'a self, path: &'a Path) -> Result<Box<dyn Reader>, AssetReaderError> {
+        if let Some(url) = Url::parse(path.to_str().unwrap_or_default()).ok() {
+            if !self.allowed_origins.is_allowed(url) {
+                return todo!("");
+            }
+        }
+
         let uri = self.make_meta_uri(path);
         get(uri).await
     }
@@ -234,10 +304,13 @@ mod tests {
     #[test]
     fn make_https_uri() {
         assert_eq!(
-            HttpSourceAssetReader::Https
-                .make_uri(Path::new("example.com/favicon.png"))
-                .to_str()
-                .unwrap(),
+            HttpSourceAssetReader {
+                secure: true,
+                allowed_origins: AllowedOrigins::All
+            }
+            .make_uri(Path::new("example.com/favicon.png"))
+            .to_str()
+            .unwrap(),
             "https://example.com/favicon.png"
         );
     }
@@ -245,10 +318,13 @@ mod tests {
     #[test]
     fn make_http_meta_uri() {
         assert_eq!(
-            HttpSourceAssetReader::Http
-                .make_meta_uri(Path::new("example.com/favicon.png"))
-                .to_str()
-                .unwrap(),
+            HttpSourceAssetReader {
+                secure: true,
+                allowed_origins: AllowedOrigins::All
+            }
+            .make_meta_uri(Path::new("example.com/favicon.png"))
+            .to_str()
+            .unwrap(),
             "http://example.com/favicon.png.meta"
         );
     }
@@ -256,10 +332,13 @@ mod tests {
     #[test]
     fn make_https_meta_uri() {
         assert_eq!(
-            HttpSourceAssetReader::Https
-                .make_meta_uri(Path::new("example.com/favicon.png"))
-                .to_str()
-                .unwrap(),
+            HttpSourceAssetReader {
+                secure: true,
+                allowed_origins: AllowedOrigins::All
+            }
+            .make_meta_uri(Path::new("example.com/favicon.png"))
+            .to_str()
+            .unwrap(),
             "https://example.com/favicon.png.meta"
         );
     }
@@ -267,10 +346,13 @@ mod tests {
     #[test]
     fn make_https_without_extension_meta_uri() {
         assert_eq!(
-            HttpSourceAssetReader::Https
-                .make_meta_uri(Path::new("example.com/favicon"))
-                .to_str()
-                .unwrap(),
+            HttpSourceAssetReader {
+                secure: true,
+                allowed_origins: AllowedOrigins::All
+            }
+            .make_meta_uri(Path::new("example.com/favicon"))
+            .to_str()
+            .unwrap(),
             "https://example.com/favicon.meta"
         );
     }

@@ -7,7 +7,12 @@ use bevy::prelude::*;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((
+            HttpSourcePlugin {
+                allowed: AllowedHosts::new(["https://raw.githubusercontent.com"]),
+            },
+            DefaultPlugins,
+        ))
         .add_systems(Startup, setup)
         .run();
 }
