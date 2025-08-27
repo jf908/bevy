@@ -348,7 +348,15 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
                 });
 
                 win.set_physical_cursor_position(Some(physical_position));
-                let position = (physical_position / win.resolution.scale_factor() as f64).as_vec2();
+
+                #[cfg(target_arch = "wasm32")]
+                let scale_factor = win.resolution.base_scale_factor();
+
+                #[cfg(not(target_arch = "wasm32"))]
+                let scale_factor = win.resolution.scale_factor();
+
+                let position = (physical_position / scale_factor as f64).as_vec2();
+
                 self.bevy_window_events.send(CursorMoved {
                     window,
                     position,
