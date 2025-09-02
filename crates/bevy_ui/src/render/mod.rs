@@ -179,9 +179,9 @@ pub fn build_ui_render(app: &mut App) {
     if let Some(graph_3d) = graph.get_sub_graph_mut(Core3d) {
         graph_3d.add_sub_graph(SubGraphUi, ui_graph_3d);
         graph_3d.add_node(NodeUi::UiPass, RunUiSubgraphOnUiViewNode);
-        graph_3d.add_node_edge(Node3d::EndMainPass, NodeUi::UiPass);
-        graph_3d.add_node_edge(Node3d::EndMainPassPostProcessing, NodeUi::UiPass);
-        graph_3d.add_node_edge(NodeUi::UiPass, Node3d::Upscaling);
+        graph_3d.add_node_edge(Node3d::Tonemapping, NodeUi::UiPass);
+        // graph_3d.add_node_edge(Node3d::EndMainPassPostProcessing, NodeUi::UiPass);
+        graph_3d.add_node_edge(NodeUi::UiPass, Node3d::EndMainPassPostProcessing);
     }
 
     app.add_plugins(UiTextureSlicerPlugin);
@@ -946,7 +946,14 @@ pub fn queue_uinodes(
     ui_pipeline: Res<UiPipeline>,
     mut pipelines: ResMut<SpecializedRenderPipelines<UiPipeline>>,
     mut transparent_render_phases: ResMut<ViewSortedRenderPhases<TransparentUi>>,
-    mut render_views: Query<(&UiCameraView, Option<&UiAntiAlias>), With<ExtractedView>>,
+    mut render_views: Query<
+        (
+            &UiCameraView,
+            Option<&UiAntiAlias>,
+            &bevy_render::view::ViewTarget,
+        ),
+        With<ExtractedView>,
+    >,
     camera_views: Query<&ExtractedView>,
     pipeline_cache: Res<PipelineCache>,
     draw_functions: Res<DrawFunctions<TransparentUi>>,
@@ -954,7 +961,7 @@ pub fn queue_uinodes(
     let draw_function = draw_functions.read().id::<DrawUi>();
     for (index, extracted_uinode) in extracted_uinodes.uinodes.iter().enumerate() {
         let entity = extracted_uinode.render_entity;
-        let Ok((default_camera_view, ui_anti_alias)) =
+        let Ok((default_camera_view, ui_anti_alias, view_target)) =
             render_views.get_mut(extracted_uinode.extracted_camera_entity)
         else {
             continue;
@@ -973,7 +980,7 @@ pub fn queue_uinodes(
             &pipeline_cache,
             &ui_pipeline,
             UiPipelineKey {
-                hdr: view.hdr,
+                texture_format: view_target.out_texture_format(),
                 anti_alias: matches!(ui_anti_alias, None | Some(UiAntiAlias::On)),
             },
         );

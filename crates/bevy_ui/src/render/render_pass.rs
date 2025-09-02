@@ -89,7 +89,7 @@ impl Node for UiPassNode {
         };
         let mut render_pass = render_context.begin_tracked_render_pass(RenderPassDescriptor {
             label: Some("ui_pass"),
-            color_attachments: &[Some(target.get_unsampled_color_attachment())],
+            color_attachments: &[Some(target.out_texture_color_attachment(None))],
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,

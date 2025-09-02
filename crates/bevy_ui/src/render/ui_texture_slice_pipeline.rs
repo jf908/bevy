@@ -150,7 +150,7 @@ impl FromWorld for UiTextureSlicePipeline {
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct UiTextureSlicePipelineKey {
-    pub hdr: bool,
+    pub texture_format: TextureFormat,
 }
 
 impl SpecializedRenderPipeline for UiTextureSlicePipeline {
@@ -190,11 +190,7 @@ impl SpecializedRenderPipeline for UiTextureSlicePipeline {
                 shader_defs,
                 entry_point: "fragment".into(),
                 targets: vec![Some(ColorTargetState {
-                    format: if key.hdr {
-                        ViewTarget::TEXTURE_FORMAT_HDR
-                    } else {
-                        TextureFormat::bevy_default()
-                    },
+                    format: key.texture_format,
                     blend: Some(BlendState::ALPHA_BLENDING),
                     write_mask: ColorWrites::ALL,
                 })],
@@ -340,14 +336,14 @@ pub fn queue_ui_slices(
     ui_slicer_pipeline: Res<UiTextureSlicePipeline>,
     mut pipelines: ResMut<SpecializedRenderPipelines<UiTextureSlicePipeline>>,
     mut transparent_render_phases: ResMut<ViewSortedRenderPhases<TransparentUi>>,
-    mut render_views: Query<&UiCameraView, With<ExtractedView>>,
+    mut render_views: Query<(&UiCameraView, &ViewTarget), With<ExtractedView>>,
     camera_views: Query<&ExtractedView>,
     pipeline_cache: Res<PipelineCache>,
     draw_functions: Res<DrawFunctions<TransparentUi>>,
 ) {
     let draw_function = draw_functions.read().id::<DrawUiTextureSlices>();
     for (index, extracted_slicer) in extracted_ui_slicers.slices.iter().enumerate() {
-        let Ok(default_camera_view) =
+        let Ok((default_camera_view, view_target)) =
             render_views.get_mut(extracted_slicer.extracted_camera_entity)
         else {
             continue;
@@ -365,7 +361,9 @@ pub fn queue_ui_slices(
         let pipeline = pipelines.specialize(
             &pipeline_cache,
             &ui_slicer_pipeline,
-            UiTextureSlicePipelineKey { hdr: view.hdr },
+            UiTextureSlicePipelineKey {
+                texture_format: view_target.out_texture_format(),
+            },
         );
 
         transparent_phase.add(TransparentUi {

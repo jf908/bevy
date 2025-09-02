@@ -39,7 +39,7 @@ pub mod graph {
         Tonemapping,
         Fxaa,
         Smaa,
-        Upscaling,
+        // Upscaling,
         ContrastAdaptiveSharpening,
         EndMainPassPostProcessing,
     }
@@ -128,7 +128,6 @@ use crate::{
     },
     skybox::SkyboxPlugin,
     tonemapping::TonemappingNode,
-    upscaling::UpscalingNode,
 };
 
 use self::graph::{Core3d, Node3d};
@@ -212,7 +211,7 @@ impl Plugin for Core3dPlugin {
             .add_render_graph_node::<ViewNodeRunner<DepthOfFieldNode>>(Core3d, Node3d::DepthOfField)
             .add_render_graph_node::<ViewNodeRunner<TonemappingNode>>(Core3d, Node3d::Tonemapping)
             .add_render_graph_node::<EmptyNode>(Core3d, Node3d::EndMainPassPostProcessing)
-            .add_render_graph_node::<ViewNodeRunner<UpscalingNode>>(Core3d, Node3d::Upscaling)
+            // .add_render_graph_node::<ViewNodeRunner<UpscalingNode>>(Core3d, Node3d::Upscaling)
             .add_render_graph_edges(
                 Core3d,
                 (
@@ -229,7 +228,7 @@ impl Plugin for Core3dPlugin {
                     Node3d::EndMainPass,
                     Node3d::Tonemapping,
                     Node3d::EndMainPassPostProcessing,
-                    Node3d::Upscaling,
+                    // Node3d::Upscaling,
                 ),
             );
     }

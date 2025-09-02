@@ -41,21 +41,14 @@ pub mod prelude {
 use crate::{
     blit::BlitPlugin,
     bloom::BloomPlugin,
-    contrast_adaptive_sharpening::CasPlugin,
     core_2d::Core2dPlugin,
     core_3d::Core3dPlugin,
     deferred::copy_lighting_id::CopyDeferredLightingIdPlugin,
     dof::DepthOfFieldPlugin,
-    experimental::mip_generation::MipGenerationPlugin,
     fullscreen_vertex_shader::FULLSCREEN_SHADER_HANDLE,
-    fxaa::FxaaPlugin,
     motion_blur::MotionBlurPlugin,
-    msaa_writeback::MsaaWritebackPlugin,
-    post_process::PostProcessingPlugin,
     prepass::{DeferredPrepass, DepthPrepass, MotionVectorPrepass, NormalPrepass},
-    smaa::SmaaPlugin,
     tonemapping::TonemappingPlugin,
-    upscaling::UpscalingPlugin,
 };
 use bevy_app::{App, Plugin};
 use bevy_asset::load_internal_asset;
@@ -81,18 +74,18 @@ impl Plugin for CorePipelinePlugin {
             .add_plugins((Core2dPlugin, Core3dPlugin, CopyDeferredLightingIdPlugin))
             .add_plugins((
                 BlitPlugin,
-                MsaaWritebackPlugin,
+                // MsaaWritebackPlugin,
                 TonemappingPlugin,
-                UpscalingPlugin,
+                // UpscalingPlugin,
                 BloomPlugin,
-                FxaaPlugin,
-                CasPlugin,
+                // FxaaPlugin,
+                // CasPlugin,
                 MotionBlurPlugin,
                 DepthOfFieldPlugin,
-                SmaaPlugin,
-                PostProcessingPlugin,
+                // SmaaPlugin,
+                // PostProcessingPlugin,
                 OrderIndependentTransparencyPlugin,
-                MipGenerationPlugin,
+                // MipGenerationPlugin,
             ));
     }
 }

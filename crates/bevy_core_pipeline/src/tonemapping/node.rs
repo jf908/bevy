@@ -7,8 +7,7 @@ use bevy_render::{
     render_asset::RenderAssets,
     render_graph::{NodeRunError, RenderGraphContext, ViewNode},
     render_resource::{
-        BindGroup, BindGroupEntries, BufferId, LoadOp, Operations, PipelineCache,
-        RenderPassColorAttachment, RenderPassDescriptor, StoreOp, TextureViewId,
+        BindGroup, BindGroupEntries, BufferId, PipelineCache, RenderPassDescriptor, TextureViewId,
     },
     renderer::RenderContext,
     texture::{FallbackImage, GpuImage},
@@ -60,9 +59,7 @@ impl ViewNode for TonemappingNode {
             return Ok(());
         };
 
-        let post_process = target.post_process_write();
-        let source = post_process.source;
-        let destination = post_process.destination;
+        let source = target.main_texture_view();
 
         let mut last_tonemapping = self.last_tonemapping.lock().unwrap();
 
@@ -115,14 +112,7 @@ impl ViewNode for TonemappingNode {
 
         let pass_descriptor = RenderPassDescriptor {
             label: Some("tonemapping_pass"),
-            color_attachments: &[Some(RenderPassColorAttachment {
-                view: destination,
-                resolve_target: None,
-                ops: Operations {
-                    load: LoadOp::Clear(Default::default()), // TODO shouldn't need to be cleared
-                    store: StoreOp::Store,
-                },
-            })],
+            color_attachments: &[Some(target.out_texture_color_attachment(None))],
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,

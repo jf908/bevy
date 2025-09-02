@@ -1,12 +1,11 @@
 use bevy_ecs::prelude::*;
-use bevy_image::BevyDefault as _;
 use bevy_render::{
     render_resource::{
         binding_types::{sampler, texture_2d, uniform_buffer},
         *,
     },
     renderer::RenderDevice,
-    view::{ViewTarget, ViewUniform},
+    view::ViewUniform,
 };
 
 #[derive(Resource)]
@@ -47,7 +46,7 @@ impl FromWorld for UiPipeline {
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct UiPipelineKey {
-    pub hdr: bool,
+    pub texture_format: TextureFormat,
     pub anti_alias: bool,
 }
 
@@ -94,11 +93,7 @@ impl SpecializedRenderPipeline for UiPipeline {
                 shader_defs,
                 entry_point: "fragment".into(),
                 targets: vec![Some(ColorTargetState {
-                    format: if key.hdr {
-                        ViewTarget::TEXTURE_FORMAT_HDR
-                    } else {
-                        TextureFormat::bevy_default()
-                    },
+                    format: key.texture_format,
                     blend: Some(BlendState::ALPHA_BLENDING),
                     write_mask: ColorWrites::ALL,
                 })],
