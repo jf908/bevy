@@ -133,16 +133,6 @@ impl ViewNode for MainOpaquePass3dNode {
                 }
             }
 
-            // Transparent draws
-            if !transparent_phase.items.is_empty() {
-                #[cfg(feature = "trace")]
-                let _transparent_main_pass_3d_span =
-                    info_span!("transparent_main_pass_3d").entered();
-                if let Err(err) = transparent_phase.render(&mut render_pass, world, view_entity) {
-                    error!("Error encountered while rendering the alpha mask phase {err:?}");
-                }
-            }
-
             // Skybox draw using a fullscreen triangle
             if let (Some(skybox_pipeline), Some(SkyboxBindGroup(skybox_bind_group))) =
                 (skybox_pipeline, skybox_bind_group)
@@ -156,6 +146,16 @@ impl ViewNode for MainOpaquePass3dNode {
                         &[view_uniform_offset.offset, skybox_bind_group.1],
                     );
                     render_pass.draw(0..3, 0..1);
+                }
+            }
+
+            // Transparent draws
+            if !transparent_phase.items.is_empty() {
+                #[cfg(feature = "trace")]
+                let _transparent_main_pass_3d_span =
+                    info_span!("transparent_main_pass_3d").entered();
+                if let Err(err) = transparent_phase.render(&mut render_pass, world, view_entity) {
+                    error!("Error encountered while rendering the alpha mask phase {err:?}");
                 }
             }
 
