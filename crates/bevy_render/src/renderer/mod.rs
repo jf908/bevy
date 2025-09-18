@@ -48,7 +48,7 @@ pub fn render_system(world: &mut World, state: &mut SystemState<Query<Entity, Wi
         &render_adapter.0,
         world,
         |encoder| {
-            crate::view::screenshot::submit_screenshot_commands(world, encoder);
+            // crate::view::screenshot::submit_screenshot_commands(world, encoder);
             crate::gpu_readback::submit_readback_commands(world, encoder);
         },
     );
@@ -104,7 +104,7 @@ pub fn render_system(world: &mut World, state: &mut SystemState<Query<Entity, Wi
         );
     }
 
-    crate::view::screenshot::collect_screenshots(world);
+    // crate::view::screenshot::collect_screenshots(world);
 
     // update the time and send it to the app world
     let time_sender = world.resource::<TimeSender>();

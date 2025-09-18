@@ -19,15 +19,15 @@ use wgpu::{
     SurfaceConfiguration, SurfaceTargetUnsafe, TextureFormat, TextureUsages, TextureViewDescriptor,
 };
 
-pub mod screenshot;
+// pub mod screenshot;
 
-use screenshot::{ScreenshotPlugin, ScreenshotToScreenPipeline};
+// use screenshot::{ScreenshotPlugin, ScreenshotToScreenPipeline};
 
 pub struct WindowRenderPlugin;
 
 impl Plugin for WindowRenderPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(ScreenshotPlugin);
+        // app.add_plugins(ScreenshotPlugin);
 
         if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
             render_app
@@ -44,11 +44,11 @@ impl Plugin for WindowRenderPlugin {
         }
     }
 
-    fn finish(&self, app: &mut App) {
-        if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
-            render_app.init_resource::<ScreenshotToScreenPipeline>();
-        }
-    }
+    // fn finish(&self, app: &mut App) {
+    //     if let Some(render_app) = app.get_sub_app_mut(RenderApp) {
+    //         render_app.init_resource::<ScreenshotToScreenPipeline>();
+    //     }
+    // }
 }
 
 pub struct ExtractedWindow {
