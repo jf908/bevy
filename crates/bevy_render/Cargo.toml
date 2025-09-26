@@ -48,6 +48,8 @@ webgl = ["wgpu/webgl"]
 webgpu = ["wgpu/webgpu"]
 detailed_trace = []
 
+naga_cache_writer = ["naga/serialize"]
+
 [dependencies]
 # bevy
 bevy_app = { path = "../bevy_app", version = "0.16.1" }
@@ -91,7 +93,7 @@ wgpu = { version = "24", default-features = false, features = [
   "naga-ir",
   "fragile-send-sync-non-atomic-wasm",
 ] }
-naga = { version = "24", features = ["wgsl-in"] }
+naga = { version = "24", features = ["wgsl-in", "deserialize"] }
 serde = { version = "1", features = ["derive"] }
 bytemuck = { version = "1.5", features = ["derive", "must_cast"] }
 downcast-rs = { version = "2", default-features = false, features = ["std"] }
@@ -115,6 +117,8 @@ indexmap = { version = "2" }
 fixedbitset = { version = "0.5" }
 bitflags = "2"
 wesl = { version = "0.1.2", optional = true }
+itertools = "0.14"
+bincode = { version = "2.0", features = ["serde"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # Omit the `glsl` feature in non-WebAssembly by default.
