@@ -26,6 +26,8 @@ use wgpu::{
     VertexBufferLayout as RawVertexBufferLayout,
 };
 
+pub mod naga_cache;
+
 /// A descriptor for a [`Pipeline`].
 ///
 /// Used to store a heterogenous collection of render and compute pipeline descriptors together.
@@ -321,15 +323,6 @@ impl ShaderCache {
                         )
                     }
                     _ => {
-                        for import in shader.imports() {
-                            Self::add_import_to_composer(
-                                &mut self.composer,
-                                &self.import_path_shaders,
-                                &self.shaders,
-                                import,
-                            )?;
-                        }
-
                         let shader_defs = shader_defs
                             .into_iter()
                             .chain(shader.shader_defs.iter().cloned())
@@ -346,34 +339,60 @@ impl ShaderCache {
                             })
                             .collect::<std::collections::HashMap<_, _>>();
 
-                        let naga = self.composer.make_naga_module(
-                            naga_oil::compose::NagaModuleDescriptor {
-                                shader_defs,
-                                ..shader.into()
-                            },
-                        )?;
+                        let shader_key =
+                            naga_cache::stringify_shader_defs(&shader_defs) + shader.path.as_str();
 
-                        #[cfg(not(feature = "decoupled_naga"))]
+                        if let Some(module) = naga_cache::NAGA_MODULE_CACHE
+                            .try_lock()
+                            .unwrap()
+                            .remove(&shader_key)
                         {
-                            ShaderSource::Naga(Cow::Owned(naga))
-                        }
+                            ShaderSource::Naga(Cow::Owned(module))
+                        } else {
+                            for import in shader.imports() {
+                                Self::add_import_to_composer(
+                                    &mut self.composer,
+                                    &self.import_path_shaders,
+                                    &self.shaders,
+                                    import,
+                                )?;
+                            }
 
-                        #[cfg(feature = "decoupled_naga")]
-                        {
-                            let mut validator = naga::valid::Validator::new(
-                                naga::valid::ValidationFlags::all(),
-                                self.composer.capabilities,
-                            );
-                            let module_info = validator.validate(&naga).unwrap();
-                            let wgsl = Cow::Owned(
-                                naga::back::wgsl::write_string(
-                                    &naga,
-                                    &module_info,
-                                    naga::back::wgsl::WriterFlags::empty(),
-                                )
-                                .unwrap(),
-                            );
-                            ShaderSource::Wgsl(wgsl)
+                            let naga = self.composer.make_naga_module(
+                                naga_oil::compose::NagaModuleDescriptor {
+                                    shader_defs,
+                                    ..shader.into()
+                                },
+                            )?;
+
+                            #[cfg(feature = "naga_cache_writer")]
+                            naga_cache::NAGA_MODULE_CACHE
+                                .try_lock()
+                                .unwrap()
+                                .insert(shader_key, naga.clone());
+
+                            #[cfg(not(feature = "decoupled_naga"))]
+                            {
+                                ShaderSource::Naga(Cow::Owned(naga))
+                            }
+
+                            #[cfg(feature = "decoupled_naga")]
+                            {
+                                let mut validator = naga::valid::Validator::new(
+                                    naga::valid::ValidationFlags::all(),
+                                    self.composer.capabilities,
+                                );
+                                let module_info = validator.validate(&naga).unwrap();
+                                let wgsl = Cow::Owned(
+                                    naga::back::wgsl::write_string(
+                                        &naga,
+                                        &module_info,
+                                        naga::back::wgsl::WriterFlags::empty(),
+                                    )
+                                    .unwrap(),
+                                );
+                                ShaderSource::Wgsl(wgsl)
+                            }
                         }
                     }
                 };
