@@ -533,7 +533,7 @@ pub fn prepare_mesh_view_bind_groups(
     light_probes_buffer: Res<LightProbesBuffer>,
     visibility_ranges: Res<RenderVisibilityRanges>,
     ssr_buffer: Res<ScreenSpaceReflectionsBuffer>,
-    oit_buffers: Res<OitBuffers>,
+    oit_buffers: Option<Res<OitBuffers>>,
     (decals_buffer, render_decals): (Res<DecalsBuffer>, Res<RenderClusteredDecals>),
 ) {
     if let (
@@ -739,7 +739,7 @@ pub fn prepare_mesh_view_bind_groups(
             entries =
                 entries.extend_with_indices(((32, transmission_view), (33, transmission_sampler)));
 
-            if has_oit {
+            if has_oit && let Some(ref oit_buffers) = oit_buffers {
                 if let (
                     Some(oit_layers_binding),
                     Some(oit_layer_ids_binding),

@@ -23,9 +23,9 @@
 #import bevy_pbr::meshlet_visibility_buffer_resolve::resolve_vertex_output
 #endif
 
-#ifdef OIT_ENABLED
-#import bevy_core_pipeline::oit::oit_draw
-#endif // OIT_ENABLED
+// #ifdef OIT_ENABLED
+// #import bevy_core_pipeline::oit::oit_draw
+// #endif // OIT_ENABLED
 
 #ifdef FORWARD_DECAL
 #import bevy_pbr::decal::forward::get_forward_decal_info

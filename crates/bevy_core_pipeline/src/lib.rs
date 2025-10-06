@@ -44,16 +44,13 @@ use crate::{
     core_2d::Core2dPlugin,
     core_3d::Core3dPlugin,
     deferred::copy_lighting_id::CopyDeferredLightingIdPlugin,
-    dof::DepthOfFieldPlugin,
     fullscreen_vertex_shader::FULLSCREEN_SHADER_HANDLE,
-    motion_blur::MotionBlurPlugin,
     prepass::{DeferredPrepass, DepthPrepass, MotionVectorPrepass, NormalPrepass},
     tonemapping::TonemappingPlugin,
 };
 use bevy_app::{App, Plugin};
 use bevy_asset::load_internal_asset;
 use bevy_render::prelude::Shader;
-use oit::OrderIndependentTransparencyPlugin;
 
 #[derive(Default)]
 pub struct CorePipelinePlugin;
@@ -80,11 +77,11 @@ impl Plugin for CorePipelinePlugin {
                 BloomPlugin,
                 // FxaaPlugin,
                 // CasPlugin,
-                MotionBlurPlugin,
-                DepthOfFieldPlugin,
+                // MotionBlurPlugin,
+                // DepthOfFieldPlugin,
                 // SmaaPlugin,
                 // PostProcessingPlugin,
-                OrderIndependentTransparencyPlugin,
+                // OrderIndependentTransparencyPlugin,
                 // MipGenerationPlugin,
             ));
     }
