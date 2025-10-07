@@ -68,7 +68,7 @@ impl ViewNode for MainOpaquePass3dNode {
         let diagnostics = render_context.diagnostic_recorder();
 
         let color_attachments = [Some(target.get_color_attachment())];
-        let depth_stencil_attachment = Some(depth.get_attachment(StoreOp::Store));
+        let depth_stencil_attachment = Some(depth.get_attachment(StoreOp::Discard));
 
         let view_entity = graph.view_entity();
         render_context.add_command_buffer_generation_task(move |render_device| {
