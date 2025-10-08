@@ -1093,13 +1093,8 @@ pub fn prepare_view_targets(
                         ..descriptor
                     },
                 );
-                let b = texture_cache.get(
-                    &render_device,
-                    TextureDescriptor {
-                        label: Some("main_texture_b"),
-                        ..descriptor
-                    },
-                );
+                // HACK - Reuse a because we know it will never be used
+                let b = a.clone();
                 let sampled = if msaa.samples() > 1 {
                     let sampled = texture_cache.get(
                         &render_device,
