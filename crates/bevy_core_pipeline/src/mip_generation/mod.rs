@@ -55,6 +55,7 @@ use bevy_render::{GpuResourceAppExt, Render, RenderApp, RenderSystems};
 use bevy_shader::{Shader, ShaderDefVal};
 use bevy_utils::default;
 
+pub mod auto_plugin;
 pub mod experimental;
 
 /// A resource that stores the shaders that perform downsampling.
