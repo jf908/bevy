@@ -567,7 +567,7 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
                 let mut query = self.world_mut()
                     .query_filtered::<(Entity, &Window), (With<CachedWindow>, Without<bevy_window::RawHandleWrapper>)>();
                 if let Ok((entity, window)) = query.single(&self.world()) {
-                    let window = window.clone();
+                    let mut window = window.clone();
 
                     let mut create_window =
                         SystemState::<CreateWindowParams>::from_world(self.world_mut());
@@ -584,7 +584,7 @@ impl<T: Event> ApplicationHandler<T> for WinitAppRunnerState<T> {
                     let winit_window = winit_windows.create_window(
                         event_loop,
                         entity,
-                        &window,
+                        &mut window,
                         &mut adapters,
                         &mut handlers,
                         &accessibility_requested,

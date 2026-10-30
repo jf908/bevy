@@ -68,7 +68,7 @@ pub fn create_windows<F: QueryFilter + 'static>(
         let winit_window = winit_windows.create_window(
             event_loop,
             entity,
-            &window,
+            &mut window,
             &mut adapters,
             &mut handlers,
             &accessibility_requested,
@@ -82,6 +82,14 @@ pub fn create_windows<F: QueryFilter + 'static>(
         window
             .resolution
             .set_scale_factor_and_apply_to_physical_size(winit_window.scale_factor() as f32);
+
+        // Properly update resolution because of call to [`show_maximized`]
+        if winit_window.is_maximized() {
+            let size = winit_window.inner_size();
+            window
+                .resolution
+                .set_physical_resolution(size.width, size.height);
+        }
 
         commands.entity(entity).insert((
             CachedWindow {
