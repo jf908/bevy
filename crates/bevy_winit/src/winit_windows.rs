@@ -47,7 +47,7 @@ impl WinitWindows {
         &mut self,
         event_loop: &ActiveEventLoop,
         entity: Entity,
-        window: &Window,
+        window: &mut Window,
         adapters: &mut AccessKitAdapters,
         handlers: &mut WinitActionRequestHandlers,
         accessibility_requested: &AccessibilityRequested,
@@ -287,6 +287,18 @@ impl WinitWindows {
             handlers,
         );
 
+        // If user has requested a maximized window on creation, apply it. Windows-only
+        #[cfg(target_os = "windows")]
+        if window.mode == WindowMode::Windowed {
+            if let Some(maximized) = window.internal.take_maximize_request() {
+                if maximized && window.visible {
+                    show_maximized(&winit_window);
+                } else {
+                    winit_window.set_maximized(maximized);
+                }
+            }
+        }
+
         // Now that the AccessKit adapter is created, it's safe to show
         // the window.
         winit_window.set_visible(window.visible);
@@ -371,6 +383,24 @@ fn get_current_videomode(monitor: &MonitorHandle) -> Option<VideoModeHandle> {
                 && Some(mode.refresh_rate_millihertz()) == monitor.refresh_rate_millihertz()
         })
         .max_by_key(VideoModeHandle::bit_depth)
+}
+
+/// Shows a hidden window directly in its maximized state.
+///
+/// winit's `set_maximized` re-hides a window that isn't marked visible yet, which would make it
+/// blink when it's then shown. winit picks up the maximized state from `WM_SIZE`.
+#[cfg(target_os = "windows")]
+#[expect(unsafe_code, reason = "winit has no way to show a window maximized")]
+fn show_maximized(window: &WinitWindow) {
+    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_MAXIMIZE};
+
+    if let Ok(handle) = window.window_handle() {
+        if let RawWindowHandle::Win32(handle) = handle.as_raw() {
+            // SAFETY: the handle comes from a live window owned by this thread.
+            unsafe { ShowWindow(handle.hwnd.get(), SW_MAXIMIZE) };
+        }
+    }
 }
 
 pub(crate) fn attempt_grab(
